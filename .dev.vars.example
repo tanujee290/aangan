@@ -1,0 +1,29 @@
+# ---------------------------------------------------------------- Browser (build time)
+# Leave these unset to run Aangan on the built-in mock backend (demo mode).
+# They are baked into the bundle at build time, so set them as *build* variables on every host.
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+# Optional; defaults to the app's own bucket name.
+VITE_SUPABASE_STORAGE_BUCKET=
+
+# ---------------------------------------------------------------- Server (runtime, never VITE_)
+# The API routes read VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY at runtime too, to check sessions.
+# On Cloudflare, add them as Worker variables as well (or use SUPABASE_URL / SUPABASE_ANON_KEY).
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+
+# AI assistant and AI bank matching (/api/assist, /api/reconcile).
+# Netlify AI Gateway injects this automatically; on Vercel and Cloudflare set it yourself.
+ANTHROPIC_API_KEY=
+# Optional: route Anthropic calls through a proxy or gateway.
+ANTHROPIC_BASE_URL=
+
+# Daily reminder job (06:00 IST). Preferred on every host, required on Cloudflare.
+SUPABASE_SERVICE_ROLE_KEY=
+# Vercel only: Vercel Cron sends this as a bearer token; the cron route refuses requests without it.
+CRON_SECRET=
+
+# ---------------------------------------------------------------- Build only
+# Lets `npm run build` apply supabase/migrations. Set it for production builds only.
+# Also used by the reminder job on Node hosts (Netlify, Vercel) when no service role key is set.
+SUPABASE_DB_URL=

@@ -1,0 +1,712 @@
+/* Aangan skin — Telegram × iOS 26 / iOS 27
+   Loaded after styles.css, so these rules win.
+   - iOS 26: floating Liquid Glass tab bar and nav buttons, large titles that collapse into the bar, floating sheets,
+     soft blur edges behind bars, glass that swells and lights up under the finger.
+   - iOS 27: crisper glass rims instead of heavy drop shadows, a user Clear ↔ Tinted setting (--tint),
+     lighter dark-mode glass, a darker selected-tab lens, swipe actions on any row.
+   - Telegram-iOS: capsule tab bar with a liquid lens you can drag between tabs, a separate round glass button,
+     gradient avatars, chat bubbles with tails over a gradient wallpaper that turns when you send.
+   The spring curves are Telegram-iOS's TouchEffect springs (mass/stiffness/damping) sampled into CSS linear(). */
+
+:root {
+  /* liftOn: mass 1.36, stiffness 568, damping 39.7 — settles in ~0.42s with a 4% overshoot */
+  --lift-on: linear(0, 0.022, 0.077, 0.154, 0.244, 0.34, 0.437, 0.526, 0.614, 0.694, 0.765, 0.826, 0.878, 0.921, 0.954, 0.982, 1.003, 1.018, 1.029, 1.035, 1.039, 1.04, 1.039, 1.037, 1.034, 1.03, 1.026, 1.023, 1.019, 1.015, 1.012, 1.009, 1.007, 1.005, 1.003, 1.002, 1.001, 1);
+  --lift-on-d: .34s;
+  /* liftOff: mass 2, stiffness 460, damping 21.8 — the jelly wobble when glass is let go */
+  --lift-off: linear(0, 0.099, 0.331, 0.618, 0.895, 1.11, 1.244, 1.296, 1.28, 1.218, 1.134, 1.049, 0.98, 0.935, 0.914, 0.914, 0.93, 0.954, 0.979, 1.002, 1.017, 1.025, 1.026, 1.022, 1.016, 1.008, 1.001, 0.996, 0.993, 0.992, 0.993, 0.995, 0.997, 0.999, 1.001, 1.002, 1.002, 1);
+  --lift-off-d: .62s;
+  /* snappy control spring (switch knobs, segmented lens) */
+  --snap: linear(0, 0.035, 0.119, 0.234, 0.362, 0.491, 0.612, 0.722, 0.815, 0.892, 0.952, 0.997, 1.028, 1.048, 1.059, 1.063, 1.062, 1.057, 1.05, 1.042, 1.034, 1.026, 1.019, 1.013, 1.008, 1.004, 1.001, 0.999, 0.997, 0.996, 0.996, 0.997, 0.998, 0.999, 1);
+  --snap-d: .38s;
+  --hairline: .5px;
+}
+@supports not (transition-timing-function: linear(0, 1)) {
+  :root { --lift-on: cubic-bezier(.2, .9, .3, 1.05); --lift-off: cubic-bezier(.34, 1.56, .64, 1); --snap: cubic-bezier(.34, 1.4, .64, 1); --lift-off-d: .45s; }
+}
+
+/* ------------------------------------------------------------------ base */
+body { font-size: 15.5px; letter-spacing: -0.012em; line-height: 1.42; font-feature-settings: normal; }
+h1, h2, h3 { letter-spacing: -0.022em; font-weight: 650; }
+h2 { font-size: 17px; }
+h2 svg { color: var(--accent); }
+.mono { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; font-weight: 600; }
+.big { font-size: 1.4rem; font-weight: 650; letter-spacing: -0.02em; }
+.eyebrow { font-size: 12px; font-weight: 500; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+a:hover { color: inherit; }
+.link, a.link { color: var(--accent); font-weight: 500; }
+.small { font-size: 13.5px; }
+.main { position: relative; }
+.route { min-width: 0; }
+
+/* Large titles (iOS / Telegram) replace the serif display face everywhere. */
+.display, .hero h1, .section-title, .prop-card h3, .empty h3, .sheet-head h2, .quick h2, .pass-top h3, .paper-head h3, .feature h3, .portal-band h2, .brand {
+  font-family: var(--serif); font-variation-settings: normal; font-style: normal;
+}
+.display { font-size: clamp(32px, 4.2vw, 40px); font-weight: 750; line-height: 1.08; letter-spacing: -0.028em; }
+.display em, .hero h1 em { font-style: normal; color: var(--accent); }
+.brand { font-size: 20px; font-weight: 700; letter-spacing: -0.03em; }
+.prop-card h3 { font-weight: 700; font-size: 1.35rem; letter-spacing: -0.025em; }
+.empty h3 { font-weight: 700; font-size: 1.25rem; }
+.pass-top h3 { font-weight: 700; font-size: 1.45rem; letter-spacing: -0.03em; }
+.paper-head h3 { font-weight: 700; font-size: 1.5rem; letter-spacing: -0.025em; }
+.feature h3 { font-weight: 700; font-size: 1.3rem; letter-spacing: -0.025em; }
+.page-head { padding-top: 0; }
+.page-sub { font-size: 15px; }
+
+/* --------------------------------------------------------- wallpaper */
+.atmo i { filter: blur(80px); opacity: .55; }
+:root[data-mode="dark"] .atmo i { opacity: .5; }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) .atmo i { opacity: .5; } }
+.atmo .jaali-field { opacity: .03; }
+
+/* ------------------------------------------------------------- glass
+   iOS 27: a crisp specular rim (bright top, faint bottom) and a hairline edge instead of iridescent borders
+   and big shadows. */
+.glass, .card, .tile, .sheet, .quick, .tabbar, .sidebar, .toast, .segmented, .month-switch, .chip, .lens-surface, .auth-card, .landing-nav, .tab-plus, .nav-glass-group, .nav-glass-btn, .composer {
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+}
+.glass::before, .card::before, .tile::before, .sheet::before, .quick::before, .tabbar::before, .topbar-inner::before, .segmented::before, .month-switch::before, .btn::before, .chip::before, .lens-surface::before, .auth-card::before, .toast::before {
+  background: linear-gradient(180deg, var(--glass-rim), color-mix(in oklab, var(--glass-rim) 25%, transparent) 22%, transparent 55%, color-mix(in oklab, var(--glass-rim) 30%, transparent));
+  opacity: calc(.55 + var(--tint) * .35);
+}
+.topbar-inner::before { display: none; }
+.card, .tile, .auth-card { background: var(--glass); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow); }
+.card { border-radius: var(--radius); padding: 18px; }
+.card-head { margin-bottom: 8px; }
+.tile { border-radius: 22px; padding: 14px 16px; }
+.tile .tile-icon { border-radius: 9px; }
+
+/* ------------------------------------------------------ touch effect
+   lib/touch.ts adds .is-pressed and --px/--py/--sx/--sy while a finger is down. Glass swells (lift-on spring),
+   a soft white light follows the finger, and it wobbles back (lift-off spring) when released. */
+.btn, .icon-btn, .chip, .tab-plus, .quick-item, .suggest button, .unit-opt, .swatch, .nav-glass-btn, a.tile, .prop-card, .send-orb, .segmented button {
+  --sx: 0; --sy: 0;
+  transition: transform var(--lift-off-d) var(--lift-off), background-color .2s, color .2s, box-shadow .25s, opacity .2s;
+}
+.btn::after, .icon-btn::after, .chip::after, .tab-plus::after, .quick-item::after, .nav-glass-btn::after, a.tile::after, .prop-card::after, .send-orb::after, .suggest button::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle at var(--px, 50%) var(--py, 50%), rgb(255 255 255 / 55%), rgb(255 255 255 / 18%) 35%, transparent 70%);
+  opacity: 0; transition: opacity .35s ease-out; mix-blend-mode: soft-light;
+}
+:is(.btn, .icon-btn, .chip, .tab-plus, .quick-item, .nav-glass-btn, a.tile, .prop-card, .send-orb, .suggest button).is-pressed::after { opacity: 1; transition-duration: .12s; }
+:is(.btn, .icon-btn, .chip, .tab-plus, .nav-glass-btn, .send-orb, .suggest button, .swatch).is-pressed {
+  transform: translate(calc(var(--sx) * 3px), calc(var(--sy) * 3px)) scale(1.07);
+  transition: transform var(--lift-on-d) var(--lift-on), background-color .2s, color .2s, box-shadow .25s;
+}
+.btn.block.is-pressed, .btn.lg.is-pressed { transform: translate(calc(var(--sx) * 3px), calc(var(--sy) * 2px)) scale(1.03); }
+:is(.quick-item, a.tile, .prop-card, .unit-opt).is-pressed { transform: scale(.975); transition: transform var(--lift-on-d) var(--lift-on), box-shadow .25s; }
+.segmented button.is-pressed { transform: scale(.94); transition: transform var(--lift-on-d) var(--lift-on); }
+:is(a.list-row, .list-row.as-button, .side-link) { transition: background-color .35s ease-out; }
+:is(a.list-row, .list-row.as-button).is-pressed { background: var(--fill); transition-duration: 0s; }
+/* iOS controls don't hop on hover. */
+/* Scoped away from .is-pressed so they never cancel the touch effect above. */
+:is(.btn, .btn:not(:disabled), a.tile, .prop-card, .quick-item):not(.is-pressed):hover { transform: none; }
+:is(.btn, .icon-btn, .chip, .quick-item, .check, .fab):not(.is-pressed):active, .tab:active svg { transform: none; }
+
+/* ------------------------------------------------------------ buttons */
+.btn { min-height: 40px; padding: 9px 18px; font-weight: 600; font-size: 15px; letter-spacing: -0.015em; color: var(--accent);
+  background: var(--glass-strong); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow); overflow: visible; isolation: auto; }
+.btn > * { position: relative; z-index: 1; }
+.btn:hover { color: var(--accent); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow); }
+@media (hover: hover) { .btn:not(:disabled):hover { filter: brightness(1.03); } }
+.btn.primary, .btn.primary:hover { color: #fff;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 88%, white), var(--accent));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 45%), inset 0 -1px 0 rgb(0 0 0 / 10%), 0 0 0 .5px color-mix(in oklab, var(--accent) 60%, black), 0 8px 20px -10px color-mix(in oklab, var(--accent) 70%, transparent); }
+.btn.ghost { color: var(--accent); background: transparent; box-shadow: none; }
+.btn.ghost:hover { background: var(--fill); box-shadow: none; }
+.btn.danger, .btn.danger:hover { color: var(--bad); }
+.btn.small { min-height: 32px; padding: 6px 13px; font-size: 13.5px; }
+.btn.lg { min-height: 50px; padding: 13px 24px; font-size: 17px; }
+.btn.icon-only { border-radius: 50%; }
+.icon-btn { color: var(--accent); border-radius: 50%; position: relative; }
+.icon-btn:hover { background: var(--fill); color: var(--accent); }
+.link:hover { text-decoration: none; opacity: .75; }
+
+/* Glass circle buttons (iOS 26 bar buttons) and the grouped capsule that holds them. */
+.nav-glass-btn { position: relative; display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 0; padding: 0; flex: none; color: var(--ink);
+  background: var(--glass-bar); box-shadow: inset 0 1px 0 var(--glass-spec), inset 0 -.5px 0 var(--glass-rim-soft), var(--glass-shadow); }
+.nav-glass-group { display: inline-flex; align-items: center; gap: 0; padding: 0; border-radius: 999px; background: var(--glass-bar);
+  box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow); }
+.nav-glass-group .nav-glass-btn { background: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.nav-glass-btn .avatar { width: 32px; height: 32px; font-size: 12px; }
+.nav-glass-btn .badge { top: 4px; right: 4px; }
+
+/* ------------------------------------------------------------- nav bar
+   Transparent over content with a soft blur edge (iOS 26); once you scroll, the inline title fades in and an iOS 27
+   hairline appears under the edge. */
+.topbar { position: sticky; top: 0; z-index: 25; padding: 6px 12px 14px; padding-top: max(6px, env(safe-area-inset-top)); }
+.topbar::before { content: ""; position: absolute; inset: 0 0 -14px; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--bg) 82%, transparent), color-mix(in oklab, var(--bg) 40%, transparent) 60%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  -webkit-mask: linear-gradient(180deg, #000 55%, transparent); mask: linear-gradient(180deg, #000 55%, transparent);
+  opacity: 0; transition: opacity .3s; }
+.is-scrolled .topbar::before { opacity: 1; }
+.topbar-inner { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 0; border-radius: 0; background: none; box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none; min-height: 46px; }
+.nav-lead { display: flex; align-items: center; min-width: 44px; }
+.nav-brand { gap: 8px; transition: opacity .25s, transform .4s var(--lift-on); }
+.is-scrolled .nav-brand { opacity: 0; transform: scale(.9); pointer-events: none; }
+.nav-title { position: absolute; left: 50%; translate: -50% 0; font-weight: 650; font-size: 17px; letter-spacing: -0.02em; white-space: nowrap; pointer-events: none;
+  padding: 7px 16px; border-radius: 999px; background: var(--glass-bar); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%); backdrop-filter: blur(var(--glass-blur)) saturate(180%); }
+.main { padding: 2px 16px calc(130px + env(safe-area-inset-bottom)); }
+
+/* --------------------------------------------------------------- tab bar */
+.tabdock { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; gap: 10px;
+  padding: 18px 14px calc(10px + env(safe-area-inset-bottom)); pointer-events: none; }
+/* soft bottom edge so content fades under the bar instead of colliding with it */
+.tabdock::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(0deg, color-mix(in oklab, var(--bg) 70%, transparent), transparent);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  -webkit-mask: linear-gradient(0deg, #000 40%, transparent); mask: linear-gradient(0deg, #000 40%, transparent); }
+.tabdock > * { pointer-events: auto; }
+.tabbar { position: relative; left: auto; bottom: auto; transform: none; flex: 1; max-width: 420px; width: auto; height: 62px;
+  display: grid; grid-template-columns: repeat(4, 1fr); align-items: stretch; padding: 4px; border-radius: 999px; gap: 0;
+  background: var(--glass-bar); box-shadow: inset 0 1px 0 var(--glass-spec), inset 0 -.5px 0 var(--glass-rim-soft), var(--glass-shadow-lg);
+  touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  transition: height .5s var(--lift-on), max-width .5s var(--lift-on); }
+.tabbar.scrubbing { touch-action: none; }
+.tab { position: relative; z-index: 1; display: grid; justify-items: center; align-content: center; gap: 1px; padding: 0; border-radius: 999px;
+  color: var(--ink); font-size: 10.5px; font-weight: 600; letter-spacing: -0.01em; -webkit-user-drag: none; transition: color .25s; }
+.tab:hover { color: var(--ink); }
+.tab.on, .tab.active { color: var(--accent); }
+.tab-icon { position: relative; display: grid; place-items: center; transition: transform .5s var(--lift-off); }
+.tab-icon .badge { top: -5px; right: -10px; box-shadow: 0 0 0 2px var(--glass-strong); }
+.tab-label { transition: opacity .25s, transform .45s var(--lift-on); }
+.tab:active .tab-icon { transform: scale(.9); transition: transform .2s var(--lift-on); }
+/* The lens: iOS 27 puts a darker pill behind the selected tab. */
+.tab-lens { position: absolute; top: 4px; left: 4px; bottom: 4px; z-index: 0; border-radius: 999px; pointer-events: none;
+  background: rgb(0 0 0 / 7%); box-shadow: inset 0 0 0 .5px rgb(0 0 0 / 3%); -webkit-backdrop-filter: none; backdrop-filter: none; }
+:root[data-mode="dark"] .tab-lens { background: rgb(255 255 255 / 13%); box-shadow: inset 0 .5px 0 rgb(255 255 255 / 18%); }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) .tab-lens { background: rgb(255 255 255 / 13%); box-shadow: inset 0 .5px 0 rgb(255 255 255 / 18%); } }
+/* Dragging: the lens lifts into a clear, refracting bead (Telegram's lifted LiquidLens). */
+.tab-lens.lifted { background: linear-gradient(180deg, rgb(255 255 255 / 40%), rgb(255 255 255 / 12%));
+  box-shadow: inset 0 1px 1px rgb(255 255 255 / 90%), inset 0 -1px 2px rgb(255 255 255 / 30%), inset 0 0 0 .5px rgb(255 255 255 / 50%), 0 10px 24px -8px rgb(0 0 0 / 30%);
+  -webkit-backdrop-filter: blur(1px) saturate(220%) brightness(1.08); backdrop-filter: blur(1px) saturate(220%) brightness(1.08); }
+@supports (backdrop-filter: url(#lg)) { .tab-lens.lifted { backdrop-filter: url(#lg-refract) saturate(220%) brightness(1.08); } }
+.tab-plus { position: relative; flex: none; width: 62px; height: 62px; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; color: var(--accent);
+  background: var(--glass-bar); box-shadow: inset 0 1px 0 var(--glass-spec), inset 0 -.5px 0 var(--glass-rim-soft), var(--glass-shadow-lg);
+  transition: transform var(--lift-off-d) var(--lift-off), width .5s var(--lift-on), height .5s var(--lift-on); }
+.tab-plus svg { transition: transform .6s var(--lift-off); }
+.tab-plus.is-pressed svg { transform: rotate(90deg); }
+/* iOS 26 minimize-on-scroll: the bar slims down and the labels tuck away. */
+.tabdock.min .tabbar { height: 50px; max-width: 300px; }
+.tabdock.min .tab-label { opacity: 0; transform: translateY(6px) scale(.8); position: absolute; }
+.tabdock.min .tab-plus { width: 50px; height: 50px; }
+.fab { display: none; }
+
+/* ---------------------------------------------------------------- sidebar */
+@media (min-width: 1000px) {
+  .tabdock, .topbar { display: none; }
+  .sidebar { border-radius: 26px; background: var(--glass-bar); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow); padding: 18px 10px; gap: 14px; }
+  .sidebar .brand { padding: 0 8px; }
+  .side-link { color: var(--ink); font-weight: 500; border-radius: 12px; padding: 8px 12px; }
+  .side-link svg { color: var(--accent); }
+  .side-link:hover { color: var(--ink); background: var(--fill); }
+  .side-link.active { color: var(--ink); font-weight: 600; }
+  .side-lens { border-radius: 12px; background: rgb(0 0 0 / 7%); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  :root[data-mode="dark"] .side-lens { background: rgb(255 255 255 / 12%); }
+  .side-group { font-size: 11.5px; letter-spacing: .02em; font-weight: 600; padding: 12px 12px 4px; }
+  .side-foot { background: var(--fill); border-radius: 16px; }
+  .main { padding: 28px 36px 60px; }
+}
+@media (min-width: 1000px) and (prefers-color-scheme: dark) { :root:not([data-mode="light"]) .side-lens { background: rgb(255 255 255 / 12%); } }
+
+/* ---------------------------------------------------------------- avatars
+   Telegram's seven gradient avatar colours, picked by a stable hash of the name (data-tone). */
+.avatar { color: #fff; font-weight: 650; letter-spacing: -0.01em; text-shadow: 0 1px 1px rgb(0 0 0 / 12%);
+  background: linear-gradient(180deg, #72d5fd, #2a9ef1); box-shadow: inset 0 1px 0 rgb(255 255 255 / 30%); }
+.avatar[data-tone="0"] { background: linear-gradient(180deg, #ff885e, #ff516a); }
+.avatar[data-tone="1"] { background: linear-gradient(180deg, #ffcd6a, #ffa85c); }
+.avatar[data-tone="2"] { background: linear-gradient(180deg, #82b1ff, #665fff); }
+.avatar[data-tone="3"] { background: linear-gradient(180deg, #a0de7e, #54cb68); }
+.avatar[data-tone="4"] { background: linear-gradient(180deg, #53edd6, #28c9b7); }
+.avatar[data-tone="5"] { background: linear-gradient(180deg, #72d5fd, #2a9ef1); }
+.avatar[data-tone="6"] { background: linear-gradient(180deg, #e0a2f3, #d669ed); }
+.avatar.light { background: rgb(255 255 255 / 24%); }
+.avatar { width: 42px; height: 42px; font-size: 15px; }
+.avatar.xl { width: 84px; height: 84px; font-size: 30px; }
+
+/* ----------------------------------------------------------------- lists */
+.list-row { padding: 10px 6px; border-top: var(--hairline) solid var(--line-strong); gap: 12px; }
+a.list-row:hover, .list-row.as-button:hover { background: var(--fill); border-radius: 14px; }
+@media (hover: none) { a.list-row:hover, .list-row.as-button:hover { background: transparent; } }
+.list-row strong { font-weight: 600; letter-spacing: -0.015em; }
+.list-row small { font-size: 13.5px; }
+/* Rows with an avatar get Telegram's inset separator that starts after the picture. */
+.list-row:has(> .avatar) { border-top-color: transparent; position: relative; }
+.list-row:has(> .avatar)::before { content: ""; position: absolute; top: 0; right: 0; left: 60px; border-top: var(--hairline) solid var(--line-strong); }
+.list > li:first-child > .list-row::before, .list > .list-row:first-child::before, .list > li:first-child .swipe-front > .list-row::before { display: none; }
+.badge { background: var(--red); font-weight: 650; font-size: 11px; min-width: 18px; height: 18px; }
+.badge.inline { background: var(--accent); }
+
+/* swipe actions (iOS 27 / Telegram chat list) */
+.swipe { position: relative; overflow: hidden; list-style: none; }
+.swipe + .swipe .list-row { border-top-color: transparent; }
+.swipe-front { position: relative; z-index: 1; background: transparent; touch-action: pan-y; }
+.swipe.open .swipe-front, .swipe-front:active { background: var(--glass-strong); }
+.swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; display: flex; overflow: hidden; }
+.swipe-act { min-width: 0; overflow: hidden; white-space: nowrap; }
+.swipe-act { flex: 1; border: 0; display: grid; place-content: center; justify-items: center; gap: 2px; color: #fff; font-size: 12px; font-weight: 600; padding: 0; }
+.swipe-act.tone-ok { background: #34c759; } .swipe-act.tone-accent { background: var(--accent); }
+.swipe-act.tone-warn { background: #ff9500; } .swipe-act.tone-bad { background: #ff3b30; }
+.swipe-list .list-row { flex-wrap: nowrap; }
+.swipe-list .list-row .grow { flex-basis: auto; }
+.hint-swipe { font-weight: 400; text-transform: none; letter-spacing: 0; margin-left: auto; }
+.card-head h2 { flex: 1; }
+@media (max-width: 719px) { .swipe-list .list-row > .row.gap-sm, .swipe-list .list-row > .pill { display: none; } }
+
+/* ----------------------------------------------------------------- pills */
+.pill { padding: 3px 9px; font-weight: 600; font-size: 12px; }
+.pill-paid { background: color-mix(in oklab, var(--green) 18%, transparent); color: var(--ok); }
+.pill-overdue { background: color-mix(in oklab, var(--red) 15%, transparent); }
+.pill-due, .pill-neutral { background: var(--fill); }
+.chip { color: var(--ink); background: var(--glass-strong); font-weight: 550; }
+.chip.on { color: #fff; background: var(--accent); box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%), 0 0 0 .5px color-mix(in oklab, var(--accent) 60%, black); }
+
+/* -------------------------------------------------------------- controls */
+/* iOS 26 switch: green track, a white capsule knob that turns into a clear glass lens while held. */
+.toggle { width: 63px; height: 28px; background: var(--fill-2); box-shadow: none; transition: background .3s; }
+.toggle.on { background: var(--green); }
+.toggle .knob { top: 2px; left: 2px; width: 37px; height: 24px; background: #fff; box-shadow: 0 0 0 .5px rgb(0 0 0 / 4%), 0 3px 8px rgb(0 0 0 / 15%), 0 3px 1px rgb(0 0 0 / 6%);
+  -webkit-backdrop-filter: none; backdrop-filter: none; transition: transform var(--snap-d) var(--snap), scale .3s var(--lift-on), background .2s, box-shadow .2s; }
+.toggle.on .knob { transform: translateX(22px); }
+.toggle:active .knob { width: 37px; scale: 1.35 1.45; background: rgb(255 255 255 / 30%);
+  box-shadow: inset 0 1px 1px rgb(255 255 255 / 90%), inset 0 0 0 .5px rgb(255 255 255 / 60%), 0 4px 12px rgb(0 0 0 / 18%);
+  -webkit-backdrop-filter: blur(1px) saturate(200%); backdrop-filter: blur(1px) saturate(200%); }
+.toggle.on:active .knob { transform: translateX(22px); }
+
+/* iOS 26 segmented control */
+.segmented { background: var(--fill); box-shadow: none; padding: 3px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.segmented::before { display: none; }
+.segmented button { color: var(--ink); font-weight: 550; font-size: 13.5px; padding: 6px 16px; }
+.segmented button.on { color: var(--ink); font-weight: 650; }
+.seg-lens { background: #fff; box-shadow: 0 3px 8px rgb(0 0 0 / 12%), 0 3px 1px rgb(0 0 0 / 4%), 0 0 0 .5px rgb(0 0 0 / 4%); -webkit-backdrop-filter: none; backdrop-filter: none; }
+:root[data-mode="dark"] .seg-lens { background: #636366; box-shadow: none; }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) .seg-lens { background: #636366; box-shadow: none; } }
+.month-switch { background: var(--glass-strong); }
+.month-switch button { color: var(--accent); }
+
+/* iOS 26 slider: thin track, white capsule thumb that becomes a glass lens while dragged. */
+.slider::before { height: 6px; background: var(--fill-2); }
+.slider::after { height: 6px; background: var(--accent); }
+.slider input::-webkit-slider-thumb { width: 38px; height: 24px; background: #fff; box-shadow: 0 0 0 .5px rgb(0 0 0 / 4%), 0 3px 8px rgb(0 0 0 / 16%); transition: scale .35s var(--lift-on), background .2s, box-shadow .2s; }
+.slider input:active::-webkit-slider-thumb { transform: none; scale: 1.5 1.6; background: rgb(255 255 255 / 25%);
+  box-shadow: inset 0 1px 1px rgb(255 255 255 / 95%), inset 0 0 0 .5px rgb(255 255 255 / 70%), 0 6px 14px rgb(0 0 0 / 18%); }
+.slider input::-moz-range-thumb { width: 38px; height: 24px; background: #fff; box-shadow: 0 3px 8px rgb(0 0 0 / 16%); }
+.slider-out { font-family: var(--mono); font-weight: 600; color: var(--muted); }
+
+/* inputs: iOS filled fields */
+.field-label { font-size: 13px; font-weight: 500; color: var(--muted); padding-left: 4px; }
+.field input, .field select, .field textarea, .search, .input { background: var(--fill); border-radius: 12px; padding: 11px 14px; box-shadow: none; font-size: 16px; }
+.field input:focus, .field select:focus, .field textarea:focus, .search:focus, .input:focus { background: var(--fill); box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--accent) 70%, transparent); }
+.search { border-radius: 999px; padding-left: 38px; }
+.unit-opt { background: var(--fill); box-shadow: none; }
+.unit-opt.on { box-shadow: inset 0 0 0 2px var(--accent); }
+.check { border: 1.5px solid var(--line-strong); background: transparent; }
+.check.done { background: var(--accent); border-color: var(--accent); }
+.swatch { width: 34px; height: 34px; box-shadow: inset 0 0 0 .5px rgb(0 0 0 / 10%); }
+.swatch.on { outline: 2.5px solid var(--swatch, var(--ink)); outline-offset: 3px; }
+.notice { background: color-mix(in oklab, var(--warn) 10%, var(--glass)); }
+
+/* Glass setting preview (Settings → Appearance) */
+.glass-setting { gap: 10px; padding-top: 4px; }
+.glass-preview { position: relative; display: flex; gap: 10px; justify-content: center; padding: 18px; border-radius: 20px; overflow: hidden;
+  background: linear-gradient(115deg, #ff885e, #ffcd6a 25%, #54cb68 45%, #2a9ef1 65%, #665fff 82%, #d669ed); }
+.glass-preview::after { content: "Aangan Aangan Aangan"; position: absolute; inset: auto 0 6px; text-align: center; font-weight: 800; font-size: 34px; letter-spacing: -0.04em; color: rgb(255 255 255 / 60%); z-index: 0; white-space: nowrap; }
+.glass-preview .lens-surface { position: relative; z-index: 1; width: 64px; height: 44px; border-radius: 999px; display: grid; place-items: center; font-weight: 700; font-size: 17px; color: var(--ink);
+  background: var(--glass-bar); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow); }
+.glass-scale { align-items: center; }
+
+/* ---------------------------------------------------------------- sheets
+   iOS 26: sheets float with margins and deep corners on phones; drag the grabber or title down to dismiss. */
+.sheet-backdrop { background: rgb(0 0 0 / 24%); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.sheet { margin: 0 8px calc(8px + env(safe-area-inset-bottom)); width: calc(100% - 16px); max-height: calc(100dvh - 60px); border-radius: 38px;
+  background: var(--glass-strong); --glass-blur: 34px; box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow-lg); }
+.sheet-drag { cursor: grab; user-select: none; -webkit-user-select: none; }
+.sheet-drag:active { cursor: grabbing; }
+.sheet-grab { width: 36px; height: 5px; background: var(--fill-2); margin-top: 7px; }
+.sheet-head { padding: 8px 14px 8px 22px; }
+.sheet-head h2 { font-size: 21px; font-weight: 700; letter-spacing: -0.025em; }
+.sheet-body { padding: 6px 20px 22px; }
+.sheet-close { width: 40px; height: 40px; color: var(--ink); background: var(--fill); box-shadow: inset 0 1px 0 var(--glass-spec); }
+.quick { margin: 0 8px calc(92px + env(safe-area-inset-bottom)); width: calc(100% - 16px); border-radius: 34px; padding: 18px 18px 18px; background: var(--glass-strong); --glass-blur: 34px; }
+.quick h2 { font-size: 21px; font-weight: 700; letter-spacing: -0.025em; }
+.quick-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.quick-item { justify-items: center; text-align: center; padding: 14px 6px 12px; border-radius: 22px; background: var(--fill); box-shadow: none; }
+.quick-item small { font-size: 11.5px; line-height: 1.2; }
+.quick-item strong { font-weight: 600; font-size: 14px; }
+/* Telegram attach-menu colours */
+.quick-item .qi-icon { width: 48px; height: 48px; border-radius: 50%; margin-bottom: 6px; box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%); background: linear-gradient(180deg, #72d5fd, #2a9ef1); }
+.quick-item[data-tone="0"] .qi-icon { background: linear-gradient(180deg, #a0de7e, #54cb68); }
+.quick-item[data-tone="1"] .qi-icon { background: linear-gradient(180deg, #72d5fd, #2a9ef1); }
+.quick-item[data-tone="2"] .qi-icon { background: linear-gradient(180deg, #82b1ff, #665fff); }
+.quick-item[data-tone="3"] .qi-icon { background: linear-gradient(180deg, #ffcd6a, #ffa85c); }
+.quick-item[data-tone="4"] .qi-icon { background: linear-gradient(180deg, #ff885e, #ff516a); }
+.quick-item:hover { box-shadow: none; }
+.quick-more a { background: var(--fill); box-shadow: none; font-weight: 550; }
+.quick-more a svg { color: var(--accent); }
+@media (min-width: 720px) {
+  .sheet { margin: 0; width: 100%; border-radius: 34px; }
+  .quick { margin: 0; width: 100%; }
+}
+
+/* ----------------------------------------------------------------- toast
+   Telegram on iOS 26 drops its notices from the top as a glass capsule. */
+.toast-wrap { top: calc(10px + env(safe-area-inset-top)); bottom: auto; }
+.toast { font-weight: 600; font-size: 14.5px; padding: 11px 18px 11px 13px; background: var(--glass-strong); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow-lg); }
+.toast svg { color: var(--green); }
+@media (min-width: 1000px) { .toast-wrap { top: 20px; bottom: auto; } }
+
+/* --------------------------------------------------------- empty, demo */
+.empty-icon { background: color-mix(in oklab, var(--accent) 14%, transparent); box-shadow: none; }
+.demo-banner { border-radius: 18px; background: color-mix(in oklab, var(--accent) 10%, var(--glass)); box-shadow: inset 0 1px 0 var(--glass-spec), 0 0 0 .5px color-mix(in oklab, var(--accent) 25%, transparent); }
+.sync-bar { border-radius: 18px; }
+.sk { background: linear-gradient(100deg, var(--fill) 30%, var(--fill-2) 50%, var(--fill) 70%); background-size: 300% 100%; box-shadow: none; }
+.table th { letter-spacing: .02em; font-size: 11.5px; font-weight: 600; }
+.table tbody tr:hover { background: var(--fill); }
+.progress > div, .bar.in, .sw.in { background: var(--accent); box-shadow: none; }
+.steps li::after { background: var(--fill-2); }
+.steps li.on::after, .steps li.done::after { background: var(--accent); }
+
+/* ------------------------------------------------------------ chat (assistant)
+   Telegram chat: gradient wallpaper with a doodle pattern, tailed bubbles, a glass composer and send orb. */
+.tg-chat > .chat-wall { animation: none; }
+.chat-wall { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: color-mix(in oklab, var(--accent) 16%, var(--bg)); }
+.wall-mesh { position: absolute; inset: -35%; transform: rotate(calc(var(--turn, 0) * 52deg)); transition: transform 1s var(--lift-on); }
+.wall-mesh i { position: absolute; width: 60%; height: 60%; border-radius: 50%; filter: blur(70px); opacity: .9; }
+.wall-mesh i:nth-child(1) { left: 5%; top: 5%; background: color-mix(in oklab, var(--accent) 45%, #dbf3ff); }
+.wall-mesh i:nth-child(2) { right: 5%; top: 10%; background: #d9f2c7; }
+.wall-mesh i:nth-child(3) { left: 15%; bottom: 5%; background: #fbe8c8; }
+.wall-mesh i:nth-child(4) { right: 10%; bottom: 10%; background: color-mix(in oklab, var(--accent) 35%, #f0dcf7); }
+:root[data-mode="dark"] .wall-mesh i { opacity: .38; }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) .wall-mesh i { opacity: .38; } }
+.wall-pattern { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--ink); opacity: .07; }
+.chat { gap: 6px; padding-bottom: 8px; }
+.bubble { position: relative; max-width: min(84%, 520px); padding: 8px 13px 9px; border-radius: 19px; font-size: 16px; line-height: 1.38; animation: none; }
+.bubble.me { color: #fff; background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 82%, #9fe3ff), var(--accent)); box-shadow: none; border-bottom-right-radius: 19px; }
+.bubble.ai { color: var(--ink); background: var(--glass-strong); box-shadow: 0 0 0 .5px var(--glass-edge), 0 1px 1px rgb(0 0 0 / 6%); border-bottom-left-radius: 19px; padding-right: 34px; }
+.bubble.me.tail { border-bottom-right-radius: 5px; margin-right: 6px; }
+.bubble.ai.tail { border-bottom-left-radius: 5px; margin-left: 6px; }
+.bubble.tail::before { content: ""; position: absolute; bottom: 0; width: 11px; height: 17px; pointer-events: none; }
+.bubble.me.tail::before { right: -6px; background: var(--accent);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 17'%3E%3Cpath d='M0 0 C0.5 9 3 14 11 17 L0 17 Z'/%3E%3C/svg%3E") no-repeat 0 0 / 100% 100%;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 17'%3E%3Cpath d='M0 0 C0.5 9 3 14 11 17 L0 17 Z'/%3E%3C/svg%3E") no-repeat 0 0 / 100% 100%; }
+.bubble.ai.tail::before { left: -6px; background: var(--glass-strong);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 17'%3E%3Cpath d='M11 0 C10.5 9 8 14 0 17 L11 17 Z'/%3E%3C/svg%3E") no-repeat 0 0 / 100% 100%;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 17'%3E%3Cpath d='M11 0 C10.5 9 8 14 0 17 L11 17 Z'/%3E%3C/svg%3E") no-repeat 0 0 / 100% 100%; }
+.bubble.ai.typing::after { content: none; }
+.bubble-copy { color: var(--muted); }
+.typing-dots { display: inline-flex; gap: 4px; padding: 6px 2px; }
+.typing-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: tg-dot 1.2s ease-in-out infinite; }
+.typing-dots i:nth-child(2) { animation-delay: .15s; } .typing-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes tg-dot { 0%, 60%, 100% { opacity: .3; transform: translateY(0) scale(.85); } 30% { opacity: 1; transform: translateY(-3px) scale(1); } }
+.assistant-intro { background: var(--glass-strong); }
+.assistant-intro .qi-icon { border-radius: 50%; background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 70%, #9fe3ff), var(--accent)); }
+.suggest button { position: relative; padding: 8px 13px; font-size: 13.5px; color: var(--ink); background: var(--glass-strong); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur)); }
+.suggest button:hover { box-shadow: inset 0 1px 0 var(--glass-spec), 0 0 0 1px color-mix(in oklab, var(--accent) 50%, transparent); }
+.composer, .composer.card { position: sticky; bottom: calc(env(safe-area-inset-bottom) + 92px); z-index: 2; display: flex; align-items: flex-end; gap: 6px; padding: 5px 5px 5px 8px; border-radius: 26px;
+  background: var(--glass-bar); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow-lg); }
+.composer textarea { min-height: 38px; max-height: 160px; padding: 8px 8px; font-size: 16px; field-sizing: content; }
+.send-orb { position: relative; flex: none; width: 38px; height: 38px; border: 0; border-radius: 50%; padding: 0; display: grid; place-items: center; color: #fff; background: var(--fill-2); }
+.send-orb.ready, .send-orb.stop { background: var(--accent); box-shadow: inset 0 1px 0 rgb(255 255 255 / 40%), 0 6px 14px -6px var(--accent); }
+.send-orb:disabled { cursor: default; color: var(--muted); }
+@media (min-width: 1000px) { .composer, .composer.card { bottom: 20px; } }
+
+/* ---------------------------------------------------------------- landing */
+.landing-nav { background: var(--glass-bar); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow); padding: 6px 6px 6px 16px; }
+.hero h1 { font-weight: 800; font-size: clamp(2.6rem, 6.2vw, 4.8rem); line-height: 1; letter-spacing: -0.045em; }
+.hero h1 .word { animation-name: tg-word; }
+@keyframes tg-word { from { opacity: 0; transform: translateY(.35em) scale(.96); filter: blur(10px); } }
+.section-title { font-weight: 800; letter-spacing: -0.04em; }
+.feature { background: var(--glass); box-shadow: inset 0 1px 0 var(--glass-spec), var(--glass-shadow); border-radius: 30px; }
+.feature > svg { width: 46px; height: 46px; padding: 11px; border-radius: 50%; color: #fff; background: linear-gradient(180deg, #72d5fd, #2a9ef1); box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%); }
+.feature:nth-child(2) > svg { background: linear-gradient(180deg, #a0de7e, #54cb68); }
+.feature:nth-child(3) > svg { background: linear-gradient(180deg, #82b1ff, #665fff); }
+.feature:nth-child(4) > svg { background: linear-gradient(180deg, #ffcd6a, #ffa85c); }
+.feature:nth-child(5) > svg { background: linear-gradient(180deg, #ff885e, #ff516a); }
+.feature:nth-child(6) > svg { background: linear-gradient(180deg, #e0a2f3, #d669ed); }
+.preview-tag { background: var(--glass-bar); }
+
+/* ---------------------------------------------------------------- misc */
+.pass-face { border-radius: 26px; }
+.pass-back { background: var(--glass-strong); }
+.recon-option { background: var(--fill); border-color: transparent; }
+.portal-pay, .mock-accounts, .mail, .link-box, .meter-preview { background: var(--fill); box-shadow: none; }
+.skip-link { background: var(--accent); }
+
+/* ------------------------------------------------- speed & polish pass
+   Findings from walking the app on phones and desktop in light and dark mode. */
+
+/* 1. Nothing may be wider than the screen. Grid tracks default to min-width: auto, so a long heading, a row of
+   nowrap buttons or a wide segmented control stretched the page to ~450-510px on a 390-412px phone. Mobile
+   browsers then zoom the layout out and the fixed tab bar slides partly below the visible screen. */
+html, body { overflow-x: clip; }
+.page { grid-template-columns: minmax(0, 1fr); }
+.page > *, .home-grid > *, .two-col > *, .hero > *, .recon-layout > * { min-width: 0; }
+@media (max-width: 999px) { .home-grid, .two-col, .hero { grid-template-columns: minmax(0, 1fr); } }
+.hero-copy .row { flex-wrap: wrap; }
+.page-head > div { min-width: 0; }
+.page-head .display { overflow-wrap: anywhere; }
+.page-head > .segmented { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.page-head > .segmented::-webkit-scrollbar { display: none; }
+.segmented { max-width: 100%; }
+.scroll-x .segmented { max-width: none; }
+.tile { min-width: 0; }
+.card > *, .stack > *, .stack-sm > *, .fieldset-plain > *, .field-group > *, .form > * { min-width: 0; }
+.page-head .btn { max-width: 100%; }
+.page-head > .row { flex-wrap: wrap; min-width: 0; }
+.month-switch { max-width: 100%; }
+.month-switch span { min-width: min(136px, 38vw); }
+.segmented button { white-space: nowrap; flex: none; }
+
+/* 2. Scrolling: every card blurring the page behind it is the biggest per-frame cost on phones. The wallpaper is
+   already blurred and still there, so in-page surfaces use a slightly denser fill instead of their own blur
+   (scroll measured ~24 -> ~33 fps on Home). Floating bars, sheets and menus keep real glass. */
+@media (hover: none), (max-width: 999px) {
+  .main :is(.card, .tile, .glass, .chip, .suggest button, .pass-back, .demo-banner, .sync-bar) { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .main :is(.card, .tile) { background: color-mix(in oklab, var(--glass-strong) 82%, var(--bg)); }
+}
+
+/* 3. Taps settle sooner: page blocks rise in a quick beat instead of trailing behind the route. */
+.page > * { animation-duration: .22s; }
+.page > *:nth-child(2) { animation-delay: .015s; } .page > *:nth-child(3) { animation-delay: .03s; } .page > *:nth-child(4) { animation-delay: .045s; } .page > *:nth-child(n+5) { animation-delay: .06s; }
+.progress > div { animation-duration: .7s; }
+.bar { animation-duration: .6s; }
+.paper { animation-duration: .42s; }
+.stamp { animation-delay: .3s; }
+.pass-inner { transition-duration: .6s; }
+
+/* 4. Sheets and the quick-add menu read clearly: they were see-through enough in dark mode that amounts on the
+   page showed through the form. iOS uses an almost solid grouped background here. */
+:root { --sheet-bg: rgb(246 246 249 / calc(.9 + var(--tint) * .08)); }
+:root[data-mode="dark"] { --sheet-bg: rgb(28 28 30 / calc(.9 + var(--tint) * .08)); }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) { --sheet-bg: rgb(28 28 30 / calc(.9 + var(--tint) * .08)); } }
+.sheet, .quick { background: var(--sheet-bg); }
+.sheet-backdrop { background: rgb(0 0 0 / 30%); }
+:root[data-mode="dark"] .sheet-backdrop { background: rgb(0 0 0 / 50%); }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) .sheet-backdrop { background: rgb(0 0 0 / 50%); } }
+.sheet .field input, .sheet .field select, .sheet .field textarea { background: var(--fill); }
+:root[data-mode="dark"] .quick-item { background: rgb(255 255 255 / 7%); }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) .quick-item { background: rgb(255 255 255 / 7%); } }
+
+/* 5. Phones: content first. The demo notice is a single slim line instead of a quarter of the screen. */
+@media (max-width: 719px) {
+  .demo-banner { font-size: 12.5px; line-height: 1.35; padding: 8px 12px; gap: 8px; margin-bottom: 10px; border-radius: 14px; }
+  .demo-banner .demo-more { display: none; }
+  .demo-banner svg { width: 14px; height: 14px; }
+}
+
+/* 6. Home: the collection ring and its numbers sit side by side on phones, so the key figures fit on one screen. */
+@media (max-width: 719px) {
+  .ring-card { flex-wrap: nowrap; justify-content: flex-start; gap: 18px; padding: 16px; }
+  .ring-card .ring { width: 136px !important; height: 136px !important; }
+  .ring-card .ring svg { width: 100%; height: 100%; }
+  .ring-card .ring-center strong { font-size: 1.7rem; }
+  .ring-card .ring-center .eyebrow { font-size: 10.5px; }
+  .ring-legend { min-width: 0; gap: 8px; }
+  .ring-legend .big { font-size: 1.2rem; }
+}
+@media (max-width: 359px) {
+  .ring-card { gap: 12px; }
+  .ring-card .ring { width: 108px !important; height: 108px !important; }
+  .ring-card .ring-center strong { font-size: 1.35rem; }
+  .ring-legend .big { font-size: 1.05rem; }
+  .tile .mono.big { font-size: 1.12rem; }
+}
+
+/* 7. Small refinements: numbers never wrap mid-amount, pills stay round, and the overdue dot pulses less nervously. */
+.mono.big, .ring-center .mono { white-space: nowrap; }
+.pill-overdue::before { animation-duration: 2.4s; }
+.tile .mono.big { line-height: 1.15; }
+.page-sub { line-height: 1.45; }
+@media (max-width: 719px) {
+  .display { font-size: clamp(30px, 8.6vw, 36px); }
+  .tiles { gap: 10px; }
+  .tile { padding: 13px 14px; }
+}
+@media (max-width: 359px) {
+  .tab { font-size: 9.5px; }
+  .tab-plus { width: 56px; height: 56px; }
+  .tabbar { height: 58px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall-mesh { transition: none; }
+  :is(.btn, .icon-btn, .chip, .tab-plus, .nav-glass-btn, .send-orb, .suggest button, .swatch, .quick-item, a.tile, .prop-card).is-pressed { transform: none; }
+}
+@media print { .tabdock, .chat-wall { display: none !important; } }
+
+/* ------------------------------------------------------------ polish v2
+   Mobile ergonomics, accessibility preferences and a few perf guards. Appended last so it wins. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scrollbar-gutter: stable; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+body { overscroll-behavior-y: none; }
+img, svg, video, canvas { max-width: 100%; }
+img { height: auto; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--fill-2); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+
+/* Touch targets: finger-sized hit areas on phones without changing the desktop layout. */
+@media (pointer: coarse) {
+  .icon-btn { width: 40px; height: 40px; }
+  .btn.small { min-height: 38px; padding-inline: 14px; }
+  .chip, .segmented button { min-height: 36px; }
+  .list-row, .side-link { min-height: 48px; }
+  input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; }
+  .field input, .field select, .field textarea, .search, .input { font-size: 16px; min-height: 46px; } /* 16px stops iOS zooming on focus */
+}
+
+/* Clearer keyboard focus on glass and in both modes. */
+:where(a, button, [role="button"], [role="tab"], input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px; border-radius: inherit;
+}
+:where(.btn.primary, .tab-plus):focus-visible { outline-color: color-mix(in oklab, var(--accent) 55%, white); }
+
+/* Dark mode: softer sheet edges and a readable placeholder/disabled state. */
+:root[data-mode="dark"] ::placeholder { color: rgb(235 235 245 / 38%); }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) ::placeholder { color: rgb(235 235 245 / 38%); } }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+
+/* Loading and long lists: keep off-screen rows cheap to render. */
+.table tbody tr, .list-row { contain: layout style; }
+.skeleton, [class*="skeleton"] { will-change: opacity; }
+
+/* Users who ask for less transparency or more contrast get solid surfaces (also the cheapest to paint). */
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .card, .tile, .sheet, .quick, .tabbar, .sidebar, .toast, .segmented, .month-switch, .chip, .auth-card, .landing-nav, .tab-plus, .nav-glass-group, .nav-glass-btn, .composer, .topbar-inner {
+    -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .card, .tile, .auth-card, .tabbar, .toast, .segmented, .month-switch, .nav-glass-group, .composer { background: var(--glass-strong); }
+  .atmo i { filter: none; opacity: .25; }
+}
+@media (prefers-contrast: more) {
+  :root { --line: rgb(60 60 67 / 55%); --muted: #55555c; }
+  :root[data-mode="dark"] { --muted: #c7c7cc; --line: rgb(235 235 245 / 45%); }
+  .card, .tile, .auth-card, .sheet { box-shadow: 0 0 0 1px var(--line-strong); }
+}
+
+/* Phones: tighter table cells so the last column (status) isn't cut off in Billing and other tables. */
+@media (max-width: 719px) {
+  .table th, .table td { padding-inline: 4px; }
+  .table td { font-size: 13.5px; }
+  .table th { font-size: 10.5px; letter-spacing: .01em; }
+  .table-wrap { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+}
+
+/* Billing's month switcher wraps each arrow in a <span>; the label rule (min-width) was stretching those spans
+   and pushing the arrows out of the pill. Only the direct label span gets the width. */
+.month-switch button > span { min-width: 0; font-size: 18px; line-height: 1; }
+
+/* Light mode: small accent-coloured links met only 2.9:1 contrast on glass. A slightly deeper shade passes WCAG AA (4.5:1). */
+:root:not([data-mode="dark"]) .link, :root:not([data-mode="dark"]) a.link { color: color-mix(in oklab, var(--accent) 72%, #000); }
+@media (prefers-color-scheme: dark) { :root:not([data-mode="light"]) .link, :root:not([data-mode="light"]) a.link { color: var(--accent); } }
+
+/* ====================================================================== visual refresh (v3)
+   Wallpapers, richer dark surfaces, phone-first tables. Wallpaper palettes use light-dark(), so a wallpaper has one
+   light and one dark variant and follows the colour mode with no extra selectors. Browsers without light-dark()
+   keep the earlier palette from styles.css (the whole block sits behind @supports). */
+@supports (color: light-dark(red, blue)) {
+  html[data-wall="courtyard"]:root, html:not([data-wall]):root, .wall-opt[data-wall="courtyard"] { --wall-bg: light-dark(#f7f2ea, #07080e);
+    --m1: light-dark(#ffd9a6, #74441a);
+    --m2: light-dark(color-mix(in oklab, var(--accent) 34%, #eaf4ff), color-mix(in oklab, var(--accent) 50%, #061030));
+    --m3: light-dark(#cfe7d4, #0f5a52);
+    --m4: light-dark(#f7cabf, #5e2470); }
+  html[data-wall="dusk"]:root, .wall-opt[data-wall="dusk"] { --wall-bg: light-dark(#f6f2fb, #08060f);
+    --m1: light-dark(#e2d5ff, #43268f);
+    --m2: light-dark(#ffd3e4, #862872);
+    --m3: light-dark(#ffe2cd, #25409c);
+    --m4: light-dark(#d3e1ff, #591a4c); }
+  html[data-wall="monsoon"]:root, .wall-opt[data-wall="monsoon"] { --wall-bg: light-dark(#eff5f4, #050a0d);
+    --m1: light-dark(#bde6de, #0f6a67);
+    --m2: light-dark(#cde0f6, #0f407c);
+    --m3: light-dark(#d8efd3, #0f5c3e);
+    --m4: light-dark(#dfe8f8, #185068); }
+  html[data-wall="marigold"]:root, .wall-opt[data-wall="marigold"] { --wall-bg: light-dark(#fcf5e9, #0b0805);
+    --m1: light-dark(#ffd27d, #8f5210);
+    --m2: light-dark(#ffbb93, #82301a);
+    --m3: light-dark(#fbe7ab, #5c4a0e);
+    --m4: light-dark(#ffd2c4, #6e2634); }
+  html[data-wall="plain"]:root, .wall-opt[data-wall="plain"] { --wall-bg: light-dark(#f2f2f7, #000000);
+    --m1: light-dark(transparent, transparent);
+    --m2: light-dark(transparent, transparent);
+    --m3: light-dark(transparent, transparent);
+    --m4: light-dark(transparent, transparent); }
+
+  :root:root {
+    --bg: var(--wall-bg);
+    /* Dark surfaces lean indigo instead of neutral grey, so cards pick up the wallpaper's colour. */
+    --glass: light-dark(rgb(255 255 255 / calc(.42 + var(--tint) * .46)), rgb(30 33 48 / calc(.46 + var(--tint) * .42)));
+    --glass-2: light-dark(rgb(255 255 255 / calc(.30 + var(--tint) * .46)), rgb(24 26 40 / calc(.38 + var(--tint) * .44)));
+    --glass-strong: light-dark(rgb(255 255 255 / calc(.62 + var(--tint) * .34)), rgb(42 46 66 / calc(.64 + var(--tint) * .32)));
+    --glass-bar: light-dark(rgb(250 250 252 / calc(.38 + var(--tint) * .5)), rgb(56 60 84 / calc(.36 + var(--tint) * .44)));
+    --glass-rim: light-dark(rgb(255 255 255 / 90%), rgb(190 200 255 / 30%));
+    --sheet-bg: light-dark(rgb(247 247 250 / calc(.9 + var(--tint) * .08)), rgb(22 24 36 / calc(.92 + var(--tint) * .06)));
+  }
+}
+
+/* ------------------------------------------------------------ atmosphere
+   Soft radial gradients instead of 80px-blurred circles: the same glow with no filter to repaint, which keeps the
+   GPU free for scrolling. The grain and the lattice stay, but fade out toward the bottom so content sits on calm colour. */
+.atmo i { filter: none; opacity: .92; }
+.atmo i:nth-child(1) { width: 86vmax; height: 86vmax; left: -30vmax; top: -34vmax; background: radial-gradient(closest-side, var(--m1), transparent); }
+.atmo i:nth-child(2) { width: 72vmax; height: 72vmax; right: -26vmax; top: -2vmax; background: radial-gradient(closest-side, var(--m2), transparent); }
+.atmo i:nth-child(3) { width: 66vmax; height: 66vmax; left: 6vmax; bottom: -34vmax; background: radial-gradient(closest-side, var(--m3), transparent); }
+.atmo i:nth-child(4) { width: 46vmax; height: 46vmax; right: 4vmax; bottom: -4vmax; background: radial-gradient(closest-side, var(--m4), transparent); }
+.atmo .jaali-field { color: color-mix(in oklab, var(--accent) 55%, var(--ink)); opacity: .06;
+  -webkit-mask-image: linear-gradient(180deg, #000, rgb(0 0 0 / 45%) 50%, transparent 90%); mask-image: linear-gradient(180deg, #000, rgb(0 0 0 / 45%) 50%, transparent 90%); }
+html[data-wall="plain"] .atmo i, html[data-wall="plain"] .atmo .jaali-field, html[data-wall="plain"] .atmo::after { display: none; }
+@media (hover: none), (max-width: 999px) {
+  .atmo i { will-change: auto; }
+  .atmo::after { mix-blend-mode: normal; opacity: .035; }
+}
+@media (prefers-reduced-transparency: reduce) { .atmo i { opacity: .35; } }
+
+/* ----------------------------------------------------- wallpaper picker */
+.wall-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; margin-top: 12px; }
+.wall-opt { position: relative; aspect-ratio: 3 / 4; border: 0; padding: 8px; border-radius: 18px; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; color: var(--ink);
+  background: radial-gradient(circle at 18% 12%, var(--m1), transparent 62%), radial-gradient(circle at 90% 30%, var(--m2), transparent 58%),
+    radial-gradient(circle at 30% 100%, var(--m3), transparent 62%), radial-gradient(circle at 94% 94%, var(--m4), transparent 50%), var(--wall-bg);
+  box-shadow: 0 0 0 .5px var(--glass-edge); transition: transform var(--lift-off-d) var(--lift-off), box-shadow .25s; }
+.wall-opt::before { content: ""; position: absolute; left: 10px; right: 10px; top: 10px; height: 34%; border-radius: 10px; background: var(--glass-strong); box-shadow: inset 0 1px 0 var(--glass-spec); }
+.wall-opt span { position: relative; font-size: 12px; font-weight: 600; letter-spacing: -.01em; padding: 3px 9px; border-radius: 999px; background: var(--glass-strong); box-shadow: inset 0 1px 0 var(--glass-spec); }
+.wall-opt.on { box-shadow: 0 0 0 2.5px var(--accent); }
+.wall-opt.is-pressed { transform: scale(.96); transition: transform var(--lift-on-d) var(--lift-on); }
+.wall-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* ------------------------------------------------------------ phones: tables become cards
+   A 10-column invoice table can't fit 390px, so each row becomes a two-line card: who + status, then invoice no,
+   total and paid. Nothing scrolls sideways and nothing is clipped. */
+@media (max-width: 719px) {
+  .billing-table, .billing-table tbody { display: block; }
+  .billing-table thead { display: none; }
+  .billing-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "who who st" "inv tot paid"; align-items: center; gap: 6px 12px; padding: 13px 4px; border-bottom: 1px solid var(--line); }
+  .billing-table tr:last-child { border-bottom: 0; }
+  .billing-table td { display: block; padding: 0; border: 0; min-width: 0; }
+  .billing-table td:nth-child(1) { grid-area: inv; font-size: 12px; color: var(--muted); }
+  .billing-table td:nth-child(2) { grid-area: who; }
+  .billing-table td:nth-child(2) small { margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .billing-table td:nth-child(8) { grid-area: tot; font-size: 16px; text-align: right; }
+  .billing-table td:nth-child(9) { grid-area: paid; font-size: 12.5px; color: var(--muted); text-align: right; }
+  .billing-table td:nth-child(9)::before { content: "Paid "; }
+  .billing-table td:nth-child(10) { grid-area: st; justify-self: end; }
+  .swipe-tip { margin: -2px 0 4px; }
+}
+
+/* The skin's `background:` shorthand on inputs wiped the magnifier icon from search fields (it is a background-image).
+   Restored here, including while focused, with room for it in the padding. */
+.search, .search:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17' fill='none' stroke='%238e8e99' stroke-width='2.2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: 16px 50%; background-size: 17px; padding-left: 42px;
+}
+
+/* Additional wallpapers (light and dark variants). */
+@supports (color: light-dark(red, blue)) {
+  html[data-wall="aurora"]:root, .wall-opt[data-wall="aurora"] { --wall-bg: light-dark(#eef4f8, #04070c); --m1: light-dark(#c4f1e0, #0f6b5a); --m2: light-dark(#d9d2ff, #3b2a8f); --m3: light-dark(#c9e6ff, #12407a); --m4: light-dark(#f3d4f2, #5a1f66); }
+  html[data-wall="ocean"]:root, .wall-opt[data-wall="ocean"] { --wall-bg: light-dark(#eef6fb, #03080f); --m1: light-dark(#bfe4fb, #0d4f82); --m2: light-dark(#c8f0ef, #0b5a63); --m3: light-dark(#dbe7ff, #1a2f78); --m4: light-dark(#d2f5e6, #0d4a3a); }
+  html[data-wall="sakura"]:root, .wall-opt[data-wall="sakura"] { --wall-bg: light-dark(#fcf2f5, #0d0609); --m1: light-dark(#ffd1e0, #7a1f45); --m2: light-dark(#ffe3d1, #6b3018); --m3: light-dark(#ecd9ff, #4a2378); --m4: light-dark(#ffd6ea, #6a1a50); }
+  html[data-wall="forest"]:root, .wall-opt[data-wall="forest"] { --wall-bg: light-dark(#f1f6ef, #050a06); --m1: light-dark(#cde9c4, #1d5a2a); --m2: light-dark(#e3efc8, #3d5414); --m3: light-dark(#c5e5d8, #0f4a3c); --m4: light-dark(#efe7c9, #4a3a12); }
+  html[data-wall="peacock"]:root, .wall-opt[data-wall="peacock"] { --wall-bg: light-dark(#eef7f6, #030a0b); --m1: light-dark(#b9ece6, #076a6a); --m2: light-dark(#c9dcff, #1a3a8f); --m3: light-dark(#d8f0c8, #2c5a12); --m4: light-dark(#e0d4ff, #3e1f7a); }
+  html[data-wall="midnight"]:root, .wall-opt[data-wall="midnight"] { --wall-bg: light-dark(#eceef6, #020308); --m1: light-dark(#d2d8f5, #1b2466); --m2: light-dark(#dcd2f2, #2e1a5c); --m3: light-dark(#cfe0f2, #0d2a4e); --m4: light-dark(#e2d8ee, #2a1240); }
+}

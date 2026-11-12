@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[functions]
+  directory = "netlify/functions"
+
+# Single-page app: every route that isn't a file or a function opens the app shell.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,25 @@
+{
+  "name": "Aangan — rent, receipts and reminders",
+  "short_name": "Aangan",
+  "description": "Rent, receipts and one-tap WhatsApp reminders for small landlords.",
+  "id": "/app",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#e7eeec",
+  "theme_color": "#1f7a74",
+  "lang": "en-IN",
+  "categories": ["finance", "business", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Payments", "short_name": "Payments", "url": "/app/payments", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Reminders", "short_name": "Reminders", "url": "/app/reminders", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Reconcile bank", "short_name": "Reconcile", "url": "/app/reconcile", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
